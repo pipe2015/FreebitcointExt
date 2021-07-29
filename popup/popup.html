@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freecoint popup config settings</title>
+    <link rel="stylesheet" href="../node_modules/materialize-css/dist/css/materialize.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body ng-app="app">
+    <nav class="nav-container">
+        <ul class="title-area">
+            <li class="name logo_margin_small">
+                <h1 class="text_icon" ng-controller="openOptions">
+                    <a id="logo_span_container" href="#" ng-click="open()" style="padding-right: 0px; font-size: 22px;">
+                        <span style="color:#97FF6B;">free</span>bitcoin
+                    </a>
+                </h1>
+            </li>
+        </ul>
+    </nav>
+    <check-page></check-page>
+    <!-- Compiled and minified JavaScript -->
+    <script src="../node_modules/materialize-css/dist/js/materialize.js""></script>
+    <script src="../node_modules/angular/angular.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>

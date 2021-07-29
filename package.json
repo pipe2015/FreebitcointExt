@@ -1,0 +1,23 @@
+{
+  "name": "freecoinext",
+  "version": "1.0.0",
+  "description": "extension para la pagina Freebitcoint ",
+  "main": "background.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pipe2015/FreebitcointExt.git"
+  },
+  "author": "pipe 2015 (@Peyi arias)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pipe2015/FreebitcointExt/issues"
+  },
+  "homepage": "https://github.com/pipe2015/FreebitcointExt#readme",
+  "dependencies": {
+    "angular": "^1.8.2",
+    "materialize-css": "^1.0.0-rc.2"
+  }
+}

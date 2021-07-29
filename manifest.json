@@ -1,0 +1,47 @@
+{
+    "name": "Freecoint Extenxion boot",
+    "description": "detecta is roll y auto click roll time",
+    "manifest_version": 3,
+    "version": "1.0",
+    "default_locale": "es",
+    "background": {
+        "service_worker": "background.js"
+    },
+    "web_accessible_resources": [
+        {
+            "resources": ["/images/*"],
+            "matches": ["https://freebitco.in/*"]
+        }
+    ],
+    "permissions": [
+        "tabs",
+        "declarativeContent",
+        "activeTab",
+        "storage",
+        "scripting",
+        "webNavigation",
+        "tabGroups",
+        "alarms"
+    ],
+    "host_permissions": ["https://*/"],
+    "options_ui": {
+        "page": "options/options.html",
+        "open_in_tab": false
+    },
+    "action": {
+        "default_title": "Click Me",
+        "default_popup": "popup/popup.html",
+        "default_icon": {
+            "16": "/images/close.png",
+            "32": "/images/get_started32.png",
+            "48": "/images/get_started48.png",
+            "128": "/images/get_started128.png"
+        }
+    },
+    "icons": {
+        "16": "/images/close.png",
+        "32": "/images/get_started32.png",
+        "48": "/images/get_started48.png",
+        "128": "/images/get_started128.png"
+    }
+}

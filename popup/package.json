@@ -1,0 +1,16 @@
+{
+  "name": "popup",
+  "version": "1.0.0",
+  "description": "",
+  "main": "popup.js",
+  "dependencies": {
+    "angular": "^1.8.2",
+    "materialize-css": "^1.0.0-rc.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
