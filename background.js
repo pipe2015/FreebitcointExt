@@ -392,6 +392,7 @@ const bootPageScript = function (opts = {}) {
         /*primero -> tengo que verificar si la pagina esta en tiempo para no inyectar los scripst
         si no esta en tiempo inyecto los scripts
         */
+       console.log('df');
         self.getTabFreecoint(tab => {
             console.log('M => addContentScrips -> data: ', tab);
             chrome.scripting.executeScript({ // execute dom
