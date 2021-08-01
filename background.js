@@ -399,31 +399,51 @@ const bootPageScript = function (opts = {}) {
             chrome.scripting.executeScript({ // execute dom
                 target: { tabId: tab.id },
                 function: function () {
-                    var node = document.querySelector('#free_play_tab > #wait');
-                    var frameProm = () => new Promise((resolve, reject) => {
-                        var countMax = 10;
-                        var timeStart = time => {
-                            var iframeUrl = document.querySelector('iframe');
-                            if(typeof iframeUrl != 'undefined' && 'getAttribute' in iframeUrl) return resolve(iframeUrl.getAttribute('src'));
+                    var utilsPromise = {
+                        frame: () => new Promise((resolve, reject) => {
+                            var countMax = 10;
+                            var timeStart = time => {
+                                var iframeUrl = document.querySelector('iframe');
+                                if(typeof iframeUrl != 'undefined') return resolve(iframeUrl.getAttribute('src'));
+    
+                                if(time >= countMax) return reject('no capture iframe element');
+                                 
+                                setTimeout(() => timeStart.call(null, time + 1), 1000);
+                            }
+                            
+                            timeStart(0);
+                        }),
+                        timeWait: () => new Promise((resolve, reject) => {
+                            var countMax = 10;
+                            var timeStart = count => {
+                                var node = document.querySelector('#free_play_tab > #wait');
+                                if(node.style.display == 'none') return resolve(true);
 
-                            if(time >= countMax) return reject();
-                             
-                            setTimeout(() => timeStart.call(null, time + 1), 1000);
-                        }
-                        
-                        timeStart(0);
-                    });
+                                if(count >= countMax) return reject('no se puedo capture time wait');
+
+                                setTimeout(() => timeStart.call(null, count + 1))
+                            }
+
+                            timeStart(0);
+                        })
+                    }
 
                     console.log('qqqqqqqqqqqq', node);
-                    if(node.style.display == 'none') {
-                        frameProm().then(iframeUrl => {
-                            console.log('url :: ', iframeUrl);
+                    Promise.all([
+                        utilsPromise.timeWait(),
+                        utilsPromise.frame()
+                    ]).then((timeWait, iframeUrl) => {
+                        console.log('url :: ', iframeUrl);
+                        if(timeWait) {
                             chrome.runtime.sendMessage({ 
                                 event: "inyectScrips",
                                 content: { iframeUrl }
                             });
-                        }).catch(() => window.location.reload());
-                    }
+                        }
+                    }).catch(v => {
+                        console.error(v);
+                        window.location.reload();
+                    });
                 }
             }).catch(e => {
                 chrome.tabs.reload(tab.id);
