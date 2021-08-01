@@ -403,9 +403,12 @@ const bootPageScript = function (opts = {}) {
                             var countMax = 10;
                             var timeStart = count => {
                                 var iframeUrl = document.querySelector('iframe');
-                                if(typeof iframeUrl != 'undefined') return resolve(iframeUrl.getAttribute('src'));
+                                if(iframeUrl != null) return resolve(iframeUrl.getAttribute('src'));
     
-                                if(count >= countMax) return reject('no capture iframe element');
+                                if(count >= countMax) return reject({
+                                    message: 'no capture iframe element',
+                                    v: true 
+                                });
                                  
                                 setTimeout(() => timeStart.call(null, count + 1), 1000);
                             }
@@ -421,7 +424,10 @@ const bootPageScript = function (opts = {}) {
                                     wait: true
                                 });
 
-                                if(count >= countMax) return reject('no se puedo capture time wait');
+                                if(count >= countMax) return reject({
+                                    message: 'no time wait element',
+                                    v: false
+                                });
 
                                 setTimeout(() => timeStart.call(null, count + 1), 1000);
                             }
@@ -429,7 +435,7 @@ const bootPageScript = function (opts = {}) {
                             timeStart(0);
                         })
                     }
-                    
+
                     Promise.all([
                         utilsPromise.timeWait(),
                         utilsPromise.frame()
@@ -442,9 +448,9 @@ const bootPageScript = function (opts = {}) {
                                 content: { iframeUrl }
                             });
                         }
-                    }).catch(v => {
-                        console.error(v);
-                        window.location.reload();
+                    }).catch(({message, v}) => {
+                        console.error(message);
+                        if(v) window.location.reload(); 
                     });
                 }
             }).catch(e => {
