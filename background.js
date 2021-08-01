@@ -204,7 +204,7 @@ EventEmitter.prefixed = prefix;
 const bootPageScript = function (opts = {}) {
     let self = this;
     self.freecointUrlPage = !opts.pageUrl ? 'https://freebitco.in/' : opts.pageUrl;
-    self.pageTitle = !opts.pageTitle ?'FreeBitco.in' : opts.pageTitle;
+    self.pageTitle = !opts.pageTitle ? 'FreeBitco.in' : opts.pageTitle;
     self.windowId = chrome.windows.WINDOW_ID_CURRENT;
     self.eveEmitter = new EventEmitter();
 
@@ -268,45 +268,27 @@ const bootPageScript = function (opts = {}) {
         });  
 
         // current page refresh (reload) 
-        chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) { 
-            //change icon is freecoint
-            self.getStorage(['tabFreeconit'], res => {
-                if(!('tabFreeconit' in res)) self.defaultTabInit();
-            });
-            
+        chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => { 
             //load page // eliminar active
             if (changeInfo.status == 'complete') {
-                console.log('complete load');
-                self.getStorage(['isActiveExtension', 'tabFreeconit'], res => {
-                    if(!('tabFreeconit' in res)) self.defaultTabInit();
-                    //is page active freecoint
-                    if(self.isPageFreecoint(tab)) {
-                        console.log('---------111', tab);
-                        if('isActiveExtension' in res && res.isActiveExtension) {
-                            console.log('-----------222', tab);
-                            console.log('oooooooooooooooooooooooooooooo');
-                            //falta si esta activo y el dom esta load inyect content scripts
-                            //change active estension
-                            self.changeIconTab(tabId, '/images/ok.png');
-
-                            //inyect content scrips
-                            
-                            self.addContentScrips();
-
-                            return;
-                        }
-
-                        return self.changeIconTab(tab.tabId, '/images/check.png');
-                    }
-
-                    if(res.isActiveExtension) return self.changeIconTab(tabId, '/images/diss.png');
-
-                    self.changeIconTab(tab.tabId, '/images/close.png');
+                console.log('complete (refresh) Page event', tab);
+                if(tab.title == 'freebitco.in' && tab.active) return chrome.alarms.create('time_reconnect', {
+                    when: Date.now() + (1000 * 30)
                 });
                 
-            }
+                self.getStorage(['isActiveExtension', 'tabFreeconit'], res => {
+                    if(!('tabFreeconit' in res)) {
+                        self.defaultTabInit(() => {
+                            self.updateAction(tabId, tab, res);
+                        });
 
-            
+                        return;
+                    }
+
+                    //is page active freecoint
+                    self.updateAction(tabId, tab, res);
+                });   
+            }
         });
 
         //listener popup & content scrips messages
@@ -314,39 +296,26 @@ const bootPageScript = function (opts = {}) {
             self.dispatch(request.event, request.content, sender, sendResponse);
         });
 
-
+        
         chrome.alarms.onAlarm.addListener(alarm => {
             let currentTimeDelay = alarm.scheduledTime;
-            console.log('alarm', alarm);
 
             if(alarm.name == 'time') {
-                self.getStorage(['timeData', 'firstTimeDelay'], res => {
+                self.getStorage(['timeData'], res => {
                     console.log('alarm', res);
                     var tab = res.timeData.tab;
                     var details = res.timeData.details;
-                    let arrFramesIds = details.filter(e => e.url.indexOf('newassets') != -1).map(wf => wf.frameId);
-
-                    if(arrFramesIds <= 1) {
-                        //reparat time
-
-                        if((currentTimeDelay - res.firstTimeDelay) >= 1000 * 10) {
-                            console.log('sadsaddssaddsa');
-                            self.getTabFreecoint(tab => {
-                                chrome.tabs.reload(tab.id);
-                            });
-
-                            return;
-                        }
-
-                        console.warn('1');
-                        return self.addContentScrips();
-                    }
+                    var frameUrl = res.timeData.iframeUrl;
+                    let arrFramesIds = details.filter(e => {
+                        if(frameUrl != '') return e.url == frameUrl;
+                        return e.url.indexOf('newassets') != -1;
+                    }).map(wf => wf.frameId);
                     
                     Promise.all([
                         chrome.scripting.executeScript({ // execute frame catpcha
                             target: {
                                 tabId: tab.id,
-                                frameIds: [arrFramesIds[arrFramesIds.length - 1]]
+                                frameIds: [frameUrl != '' ? arrFramesIds[0] : arrFramesIds[arrFramesIds.length - 1]]
                             },
                             files: ['content/page_captcha.js'],
                         }),
@@ -356,72 +325,108 @@ const bootPageScript = function (opts = {}) {
                         })
                     ]).then(v => {
                         self.setStorage({ registerScripts: true });
-                    }).catch(self.runError());  
-                    /*
-
-                    chrome.scripting.executeScript({ // execute dom
-                            target: { tabId: tab.id },
-                            files: ['content/page_freecoint.js'],
-                    })*/
+                    }).catch(self.runError((e, error) => {
+                        chrome.tabs.reload(tab.id);
+                        console.error('no execute script catpcha capture', e, error);
+                    }));  
                     
                 }, 'local');
+            }
+
+            if(alarm.name == 'time_reconnect') {
+                self.getTabFreecoint(tab => {
+                    chrome.tabs.reload(tab.id);
+                });
             }
 
         });
 
         chrome.windows.onCreated.addListener(() => {
             console.log('open window');
-            self.clearStorageCache();
-            
-            self.getStorage('autoActive', res => {
-                if('autoActive' in res && res.autoActive) {
-                    self.setStorage({ isActiveExtension: res.autoActive });
-                }
+            self.clearStorageCache(false, () => {
+                self.getStorage('autoActive', res => {
+                    if('autoActive' in res && res.autoActive) {
+                        console.log('auto active');
+                        self.setStorage({ isActiveExtension: res.autoActive });
+                    }
+                });
             });
             
-        });
-        
-        chrome.windows.onRemoved.addListener(() => {
-            console.log('close window');
-
-            self.clearStorageCache();
+            
+            
         });
 
+
+        /*chrome.webNavigation.onCompleted.addListener(details => {
+            console.log('load frames', details);
+        });*/
 
     }
     
+    self.updateAction = (tabId, tab, res) => {
+        if(self.isPageFreecoint(tab)) {
+            console.log('---------111', tab);
+            if('isActiveExtension' in res && res.isActiveExtension) {
+                console.log('-----------222', tab);
+                //falta si esta activo y el dom esta load inyect content scripts
+                //change active estension
+                self.changeIconTab(tabId, '/images/ok.png');
+
+                //inyect content scrips
+                self.addContentScrips();
+
+                return;
+            }
+
+            return self.changeIconTab(tab.tabId, '/images/check.png');
+        }
+
+        if(res.isActiveExtension) return self.changeIconTab(tabId, '/images/diss.png');
+
+        self.changeIconTab(tab.tabId, '/images/close.png');
+
+    }
+
     self.addContentScrips = () => {
+        // lo llamo cuando esta cargaada la pagina
         /*primero -> tengo que verificar si la pagina esta en tiempo para no inyectar los scripst
         si no esta en tiempo inyecto los scripts
         */
         self.getTabFreecoint(tab => {
-            console.log('data-data-', tab);
+            console.log('M => addContentScrips -> data: ', tab);
             chrome.scripting.executeScript({ // execute dom
                 target: { tabId: tab.id },
                 function: function () {
                     var node = document.querySelector('#free_play_tab > #wait');
+                    var frameProm = () => new Promise((resolve, reject) => {
+                        var countMax = 10;
+                        var timeStart = time => {
+                            var iframeUrl = document.querySelector('iframe');
+                            if(typeof iframeUrl != 'undefined' && 'getAttribute' in iframeUrl) return resolve(iframeUrl.getAttribute('src'));
+
+                            if(time >= countMax) return reject();
+                             
+                            setTimeout(() => timeStart.call(null, time + 1), 1000);
+                        }
+                        
+                        timeStart(0);
+                    });
+
                     console.log('qqqqqqqqqqqq', node);
                     if(node.style.display == 'none') {
-                        chrome.runtime.sendMessage({ event: "inyectScrips" });
+                        frameProm().then(iframeUrl => {
+                            console.log('url :: ', iframeUrl);
+                            chrome.runtime.sendMessage({ 
+                                event: "inyectScrips",
+                                content: { iframeUrl }
+                            });
+                        }).catch(() => window.location.reload());
                     }
                 }
+            }).catch(e => {
+                chrome.tabs.reload(tab.id);
+                console.error('no inyect qqqq', e);
             });
-
-            /*chrome.webNavigation.getAllFrames({tabId: tab.id}, details => {
-                console.log('addContentScrips', tab, details);
-                //add contentd scripts
-                var nowDelay = Date.now() + 500;
-
-                self.setStorage({ 
-                    timeData : { tab, details },
-                    firstTimeDelay: nowDelay
-                }, () => {
-                    chrome.alarms.create('time', {
-                        when: nowDelay
-                    });
-                }, 'local');             
-              
-            });*/
             
         });
         
@@ -430,23 +435,26 @@ const bootPageScript = function (opts = {}) {
     self.addEventLoop = () => {
         
         self.onEvent('inyectScrips', (content, sender, sendResponse) => {
-            console.log('inyectScrips');
+            console.log('prepare -> inyectScrips');
             self.getTabFreecoint(tab => {
-                chrome.webNavigation.getAllFrames({tabId: tab.id}, details => {
-                    console.log('addContentScrips', tab, details);  
+                self.getloadFrames(tab).then(details => {
+                    console.log('add -> ContentScrips', tab, details);
+                    var iframeUrl = typeof content.iframeUrl != 'undefined' ? content.iframeUrl : '';  
                     //add contentd scripts
-                    var nowDelay = Date.now() + 500;
 
                     self.setStorage({ 
-                        timeData : { tab, details },
-                        firstTimeDelay: nowDelay
+                        timeData : { tab, details, iframeUrl }
                     }, () => {
                         chrome.alarms.create('time', {
-                            when: nowDelay
+                            when: Date.now() + 1000
                         });
-                    }, 'local');             
-                
+                    }, 'local');   
+
+                }).catch(e => {
+                    chrome.tabs.reload(tab.id);
+                    console.error('M => addEventLoop E -> ', e);
                 });
+
             });
 
         });
@@ -484,7 +492,7 @@ const bootPageScript = function (opts = {}) {
         });
 
         self.onEvent('validHumanCaptcha', (content, sender, sendResponse) => {
-
+            
             self.getTabFreecoint(tab => {
                 chrome.tabs.sendMessage(tab.id, {
                     action: content.action,
@@ -506,7 +514,7 @@ const bootPageScript = function (opts = {}) {
             });
 
         });
-
+        
         self.onEvent('changeIcon', (content, sender, sendResponse) => {
             console.log('changeIcon');
 
@@ -531,36 +539,75 @@ const bootPageScript = function (opts = {}) {
                 chrome.tabs.sendMessage(tab.id, {
                     action: content.action,
                     page: content.pageContent
+                }, isClick => {
+                    console.log('isClick : ', isClick);
+                    if(isClick) {
+                        self.getStorage('countRollclick', res => {
+                            if(!('countRollclick' in res)) {
+                                return self.setStorage({ countRollclick: 1 }, null, 'local');
+                            }
+    
+                            self.setStorage({ countRollclick: res.countRollclick + 1 }, null, 'local');
+                        }, 'local');
+                    }
+                    
                 });
             });
             
         });
 
     }
-
-    self.clearStorageCache = (val = false) => {
+    
+    self.clearStorageCache = (val = false, callback) => {
         if(val) { // solo install extension
             chrome.storage.sync.clear();
             chrome.storage.local.clear();
             return;
         }
+        
+        Promise.all([
+            self.removePromise([
+                'isActiveExtension',
+                'registerScripts',
+                'validHumanExist',
+                'tabFreeconit'
+            ], 'sync'),
+            self.removePromise([
+                'timeData',
+                'countRollclick'        
+            ], 'local')
+        ]).then(() => {
+            if(typeof callback != 'undefined') callback.call(self);
+        }).catch(e => console.error(e));
 
-        //close y open
-        chrome.storage.sync.remove([
-            'isActiveExtension',
-            'registerScripts',
-            'validHumanExist',
-            'tabFreeconit'
-        ]);
-
-        chrome.storage.local.remove([
-            'timeData',
-            'firstTimeDelay'
-        ]);
     }
 
-    //                                isActiveExtension
+    ////////////////////////////////
     ////    Functions Utils     ////
+    ////////////////////////////////
+
+    self.getloadFrames = tab => new Promise((resolve, reject) => {
+        var countMax = 10;
+        var checkFrames = count => {
+            chrome.webNavigation.getAllFrames({tabId: tab.id}, details => {
+                if(details.length >= 3) return resolve(details);
+
+                if(count >= countMax) return reject('no se obtuvieron los 3 frames');
+
+                setTimeout(() => checkFrames.call(null, count + 1), 1000);
+            }); 
+        }
+
+        checkFrames(0);    
+    });
+
+    self.removePromise = (v, type) => new Promise((resolve, reject) => {
+        chrome.storage[type].remove(v, () => {
+            if(!chrome.runtime.lastError) return resolve();
+            reject(chrome.runtime.lastError);
+        })
+    });
+
     self.defaultTabInit = callback => {
         chrome.tabs.query({
             windowId: self.windowId
@@ -593,24 +640,24 @@ const bootPageScript = function (opts = {}) {
         });
     }
 
-    self.runError = callback => (function () {
-        if (chrome.runtime.lastError) {
-            console.warn('run error', chrome.runtime.lastError);
-            return;
-        }
-        if(typeof callback != 'undefined') callback.apply(this, [...arguments]);
+    self.runError = callback => (function (e) {
+        let error = null;
+        if ((error = chrome.runtime.lastError)) console.warn('run error', error);
+        
+        if(typeof callback != 'undefined') callback.call(this, e, error);
     });
-    
 
     // storage type => args -> type: (sync || local)
     self.getStorage = (key, callback, type = 'sync') => chrome.storage[type].get(key, callback);
     self.setStorage = (items, callback, type = 'sync') => chrome.storage[type].set(items, () => {
         if (!chrome.runtime.lastError) {
-            if(typeof callback != 'undefined') callback.call(self);
+            if(self.isFunction(callback)) callback.call(self);
             return;
         };
         console.warn('set storage: ', chrome.runtime.lastError);
     });
+
+    self.isFunction = obj => typeof obj == 'function' || false;
 
     // init
     self.startScript = () => {
@@ -624,44 +671,3 @@ const bootPageScript = function (opts = {}) {
 }
 
 new bootPageScript().startScript(); // start
-
-//---------------------------------------------------------CODE EXAMPLES-------------------------------------------
-
-//---------------------------------------------CONECTIONS EXAMPLES--------------------------------------------------
-
-
-
-
-
-
-
-
-/*chrome.runtime.onConnect.addListener(function(port) {
-
-    port.onMessage.addListener(function(msg) {
-        port.postMessage('holaaa');
-    });
-});*/
-
-
-//------------------------------------------------------------------------------------------------------------------
-
-/*var ruleActiveExt = {
-    id: "actiExt",
-    conditions: [
-        new chrome.declarativeContent.PageStateMatcher({
-            pageUrl: { urlContains: 'freebitco.in'}
-        })
-    ],
-    actions: [ new chrome.declarativeContent.ShowPageAction() ] //change icon extension habilitar
-};
-
-var rulesList = [ruleActiveExt];*/
-
-
-/*chrome.declarativeContent.onPageChanged.removeRules(undefined, () => {
-        //add rules 
-        chrome.declarativeContent.onPageChanged.addRules(rulesList, details => {
-            console.log(details);
-        });
-    });*/

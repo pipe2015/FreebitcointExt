@@ -19,6 +19,7 @@ app.directive('checkPage', () => ({
     controller: ['$scope', 'utils', ($scope, utils) => {
         $scope.isPage = false;
         $scope.isActive = false;
+        $scope.clickCount = 0;
 
         utils.getCurrentTab(tab => {
             if(utils.isPageFreecoint(tab)) {
@@ -32,6 +33,12 @@ app.directive('checkPage', () => ({
                 $scope.$apply(() => $scope.isActive = true);
             }        
         });
+        
+        utils.getStorage('countRollclick', res => {
+            if('countRollclick' in res) {
+                $scope.$apply(() => $scope.clickCount = res.countRollclick);
+            }        
+        }, 'local');
     }],
     template: `
     <section class="stadis-freecoint">
@@ -50,6 +57,14 @@ app.directive('checkPage', () => ({
                                     </div>
                                     <div class="col s6">
                                         <span class="item-value">12</span>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col s6">
+                                        <span class="item-title">Roll clicks</span>
+                                    </div>
+                                    <div class="col s6">
+                                        <span class="item-value" ng-bind="clickCount"></span>
                                     </div>
                                 </div>
                                 <div class="row">

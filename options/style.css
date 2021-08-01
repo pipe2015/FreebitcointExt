@@ -1,0 +1,34 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html, body{
+    width: 500px;
+    height: 200px;
+    font-family: 'Open Sans', sans-serif;
+    box-sizing: border-box;
+} 
+
+.nav-config {
+    margin-top: 12px;
+    background-color: white;
+    box-shadow: initial;
+}
+
+.title-config {
+    font-size: 20px;
+    text-align: left;
+    color: #333;
+    margin-bottom: 12px;
+    font-weight: 800;
+}
+
+
+.item-text {
+    font-size: 12px;
+    word-break: break-word;
+}
+
+
+

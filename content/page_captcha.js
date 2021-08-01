@@ -3,7 +3,7 @@ console.log('page catchap', window.location.origin);
 console.log(document.querySelector('body'));
 var funcUtils = {
     waitValit: () => new Promise((resolve, reject) => {
-  
+        var countMax = 5;
         let changeStorageCallback = time => {
             chrome.storage.sync.get(['validHumanExist'], result => {
 
@@ -14,38 +14,39 @@ var funcUtils = {
                     return;
                 }
 
+                if(time >= countMax) return reject();
+
+                setTimeout(() => changeStorageCallback.call(null, time + 1), 250);
             });
-    
-            setTimeout(() => changeStorageCallback.call(this, time + 1), 250);
         }
         
-        changeStorageCallback.call(this, 0);
+        changeStorageCallback(0);
     }),
     waitElement: waitTimer => new Promise((resolve, reject) => {
-        var element = document.getElementById('checkbox');
-        var timer = 0;
+        var countMax = 5;
+        var timeWait = 1000;
 
-        var IntervalId = setTimeout(() => {
-            console.log('eleme', element);
+        var timeStart = count => {
+            var element = document.getElementById('checkbox');
             if (typeof(element) != 'undefined' && element != null) {
-                resolve(element);
-                return;
+                console.log('eleme', element);
+                return resolve(element);
             }
 
-            reject('no se pudo resolver hay un error (page || module inyect)');
-            clearTimeout(IntervalId);
-        }, waitTimer);
+            if(count >= countMax) {
+                return reject('no se pudo resolver hay un error (page || module inyect)');
+            }
+            
+            setTimeout(() => timeStart.call(null, count + 1), timeWait);
+        }
+
+        setTimeout(timeStart, waitTimer, 0);
     })
 }
 
 var start = function () {
     var time = 0;
     var eleCap = null;
-
-    if(window.location.origin != originUrl) {
-        console.log('no match url');
-        return; 
-    }
     
     let timeStart = cTime => {
         //is resolve ckeck ok
@@ -81,7 +82,7 @@ var start = function () {
                 if(!res) resolveCathInit(time); // is not frame human resolve
                 //reload page
                 chrome.runtime.sendMessage({ event: 'reloadPage'});
-            });
+            }).catch(() => chrome.runtime.sendMessage({ event: 'reloadPage'}));
 
             return;
         }
@@ -97,8 +98,8 @@ var start = function () {
             timeStart(time);
         }
     }
-
-    funcUtils.waitElement(1000).then(element => {
+    
+    funcUtils.waitElement(5000 + (Math.floor(Math.random() * 5) * 1000)).then(element => {
         eleCap = element;
         console.log('waitele', eleCap);
         resolveCathInit(time);
@@ -106,8 +107,6 @@ var start = function () {
         chrome.runtime.sendMessage({ event: 'reloadPage'});
         console.warn('captchat incapture button click', error);
     });
-
-    console.log('iiiiiiiiiiiiiiiiiiiiiiii');
 };
 
 /*chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
