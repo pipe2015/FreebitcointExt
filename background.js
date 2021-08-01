@@ -429,8 +429,7 @@ const bootPageScript = function (opts = {}) {
                             timeStart(0);
                         })
                     }
-
-                    console.log('qqqqqqqqqqqq', node);
+                    
                     Promise.all([
                         utilsPromise.timeWait(),
                         utilsPromise.frame()
