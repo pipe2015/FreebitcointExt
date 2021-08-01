@@ -392,7 +392,7 @@ const bootPageScript = function (opts = {}) {
         /*primero -> tengo que verificar si la pagina esta en tiempo para no inyectar los scripst
         si no esta en tiempo inyecto los scripts
         */
-        
+
         self.getTabFreecoint(tab => {
             console.log('M => addContentScrips -> data: ', tab);
             chrome.scripting.executeScript({ // execute dom
@@ -416,7 +416,10 @@ const bootPageScript = function (opts = {}) {
                             var countMax = 10;
                             var timeStart = count => {
                                 var node = document.querySelector('#free_play_tab > #wait');
-                                if(node.style.display == 'none') return resolve(true);
+                                if(node.style.display == 'none') return resolve({
+                                    element: node,
+                                    wait: true
+                                });
 
                                 if(count >= countMax) return reject('no se puedo capture time wait');
 
@@ -431,9 +434,10 @@ const bootPageScript = function (opts = {}) {
                     Promise.all([
                         utilsPromise.timeWait(),
                         utilsPromise.frame()
-                    ]).then((timeWait, iframeUrl) => {
+                    ]).then((time, iframeUrl) => {
+                        console.log('qqqqqqqqqqqq', time.element);
                         console.log('url :: ', iframeUrl);
-                        if(timeWait) {
+                        if(time.wait) {
                             chrome.runtime.sendMessage({ 
                                 event: "inyectScrips",
                                 content: { iframeUrl }
