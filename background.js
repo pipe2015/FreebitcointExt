@@ -402,13 +402,13 @@ const bootPageScript = function (opts = {}) {
                     var utilsPromise = {
                         frame: () => new Promise((resolve, reject) => {
                             var countMax = 10;
-                            var timeStart = time => {
+                            var timeStart = count => {
                                 var iframeUrl = document.querySelector('iframe');
                                 if(typeof iframeUrl != 'undefined') return resolve(iframeUrl.getAttribute('src'));
     
-                                if(time >= countMax) return reject('no capture iframe element');
+                                if(count >= countMax) return reject('no capture iframe element');
                                  
-                                setTimeout(() => timeStart.call(null, time + 1), 1000);
+                                setTimeout(() => timeStart.call(null, count + 1), 1000);
                             }
                             
                             timeStart(0);
@@ -421,7 +421,7 @@ const bootPageScript = function (opts = {}) {
 
                                 if(count >= countMax) return reject('no se puedo capture time wait');
 
-                                setTimeout(() => timeStart.call(null, count + 1))
+                                setTimeout(() => timeStart.call(null, count + 1), 1000);
                             }
 
                             timeStart(0);
