@@ -419,10 +419,7 @@ const bootPageScript = function (opts = {}) {
                             var countMax = 10;
                             var timeStart = count => {
                                 var node = document.querySelector('#free_play_tab > #wait');
-                                if(node.style.display == 'none') return resolve({
-                                    element: node,
-                                    wait: true
-                                });
+                                if(node.style.display == 'none') return resolve({ element: node });
 
                                 if(count >= countMax) return reject({
                                     message: 'no time wait element',
@@ -436,7 +433,22 @@ const bootPageScript = function (opts = {}) {
                         })
                     }
 
-                    Promise.all([
+
+                    utilsPromise.timeWait().then(time => {
+                        console.log('qqqqqqqqqqqq', time.element);
+                        return utilsPromise.frame();
+                    }).then(iframeUrl => {
+                        chrome.runtime.sendMessage({ 
+                            event: "inyectScrips",
+                            content: { iframeUrl }
+                        });
+                    }).catch(({message, v}) => {
+                        console.error(message);
+                        if(v) window.location.reload(); 
+                    })
+                    
+
+                    /*Promise.all([
                         utilsPromise.timeWait(),
                         utilsPromise.frame()
                     ]).then((time, iframeUrl) => {
@@ -451,7 +463,7 @@ const bootPageScript = function (opts = {}) {
                     }).catch(({message, v}) => {
                         console.error(message);
                         if(v) window.location.reload(); 
-                    });
+                    });*/
                 }
             }).catch(e => {
                 chrome.tabs.reload(tab.id);
