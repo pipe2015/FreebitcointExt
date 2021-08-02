@@ -407,7 +407,7 @@ const bootPageScript = function (opts = {}) {
     
                                 if(count >= countMax) return reject({
                                     message: 'no capture iframe element',
-                                    v: true 
+                                    reload: true 
                                 });
                                  
                                 setTimeout(() => timeStart.call(null, count + 1), 1000);
@@ -423,7 +423,7 @@ const bootPageScript = function (opts = {}) {
 
                                 if(count >= countMax) return reject({
                                     message: 'no time wait element',
-                                    v: false
+                                    reload: false
                                 });
 
                                 setTimeout(() => timeStart.call(null, count + 1), 1000);
@@ -442,9 +442,9 @@ const bootPageScript = function (opts = {}) {
                             event: "inyectScrips",
                             content: { iframeUrl }
                         });
-                    }).catch(({message, v}) => {
+                    }).catch(({message, reload}) => {
                         console.error(message);
-                        if(v) window.location.reload(); 
+                        if(reload) window.location.reload(); 
                     })
                     
 
