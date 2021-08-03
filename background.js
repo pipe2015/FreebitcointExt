@@ -273,7 +273,7 @@ const bootPageScript = function (opts = {}) {
             if (changeInfo.status == 'complete') {
                 console.log('complete (refresh) Page event', tab);
                 if(tab.title == 'freebitco.in' && tab.active) return chrome.alarms.create('time_reconnect', {
-                    when: Date.now() + (1000 * 30)
+                    delayInMinutes: 1
                 });
                 
                 self.getStorage(['isActiveExtension', 'tabFreeconit'], res => {
@@ -403,7 +403,7 @@ const bootPageScript = function (opts = {}) {
                             var countMax = 10;
                             var timeStart = count => {
                                 var iframeUrl = document.querySelector('iframe');
-                                if(iframeUrl != null) return resolve(iframeUrl.getAttribute('src'));
+                                if(iframeUrl != null) return resolve(iframeUrl.attributes.src.value);
     
                                 if(count >= countMax) return reject({
                                     message: 'no capture iframe element',
@@ -415,7 +415,7 @@ const bootPageScript = function (opts = {}) {
                             
                             timeStart(0);
                         }),
-                        timeWait: () => new Promise((resolve, reject) => {
+                        timeWait: (time = 0) => new Promise((resolve, reject) => {
                             var countMax = 10;
                             var timeStart = count => {
                                 var node = document.querySelector('#free_play_tab > #wait');
@@ -429,48 +429,31 @@ const bootPageScript = function (opts = {}) {
                                 setTimeout(() => timeStart.call(null, count + 1), 1000);
                             }
 
-                            timeStart(0);
+                            timeStart(time);
                         })
                     }
-
-
+                    
                     utilsPromise.timeWait().then(time => {
                         console.log('qqqqqqqqqqqq', time.element);
                         return utilsPromise.frame();
                     }).then(iframeUrl => {
-                        chrome.runtime.sendMessage({ 
+                        /*chrome.runtime.sendMessage({ 
                             event: "inyectScrips",
                             content: { iframeUrl }
-                        });
+                        });*/
                     }).catch(({message, reload}) => {
                         console.error(message);
                         if(reload) window.location.reload(); 
-                    })
+                    });
                     
-
-                    /*Promise.all([
-                        utilsPromise.timeWait(),
-                        utilsPromise.frame()
-                    ]).then((time, iframeUrl) => {
-                        console.log('qqqqqqqqqqqq', time.element);
-                        console.log('url :: ', iframeUrl);
-                        if(time.wait) {
-                            chrome.runtime.sendMessage({ 
-                                event: "inyectScrips",
-                                content: { iframeUrl }
-                            });
-                        }
-                    }).catch(({message, v}) => {
-                        console.error(message);
-                        if(v) window.location.reload(); 
-                    });*/
                 }
             }).catch(e => {
                 chrome.tabs.reload(tab.id);
                 console.error('no inyect qqqq', e);
             });
-            
+
         });
+
         
     } 
 
