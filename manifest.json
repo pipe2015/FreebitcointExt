@@ -9,7 +9,7 @@
     },
     "web_accessible_resources": [
         {
-            "resources": ["/images/*"],
+            "resources": ["node_modules/socket.io/client-dist/*", "/images/*"],
             "matches": ["https://freebitco.in/*"]
         }
     ],
@@ -24,6 +24,12 @@
         "alarms"
     ],
     "host_permissions": ["https://*/"],
+    "content_scripts": [
+        {
+          "matches": ["https://freebitco.in/*"],
+          "js": ["node_modules/socket.io/client-dist/socket.io.min.js"]
+        }
+    ],
     "options_ui": {
         "page": "options/options.html",
         "open_in_tab": false
