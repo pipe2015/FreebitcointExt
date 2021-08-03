@@ -27,6 +27,7 @@
     "content_scripts": [
         {
           "matches": ["https://freebitco.in/*"],
+          "run_at": "document_end",
           "js": ["node_modules/socket.io/client-dist/socket.io.min.js"]
         }
     ],
