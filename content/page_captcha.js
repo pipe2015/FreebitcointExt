@@ -3,7 +3,7 @@ console.log('page catchap', window.location.origin);
 console.log(document.querySelector('body'));
 var funcUtils = {
     waitValit: () => new Promise((resolve, reject) => {
-        var countMax = 5;
+        var countMax = 10;
         let changeStorageCallback = time => {
             chrome.storage.sync.get(['validHumanExist'], result => {
 
@@ -16,7 +16,7 @@ var funcUtils = {
 
                 if(time >= countMax) return reject();
 
-                setTimeout(() => changeStorageCallback.call(null, time + 1), 250);
+                setTimeout(() => changeStorageCallback.call(null, time + 1), 500);
             });
         }
         
@@ -47,7 +47,7 @@ var funcUtils = {
 var start = function () {
     var time = 0;
     var eleCap = null;
-    
+
     let timeStart = cTime => {
         //is resolve ckeck ok
         if(document.querySelector('#anchor-state .pulse').style.display == 'none') {
@@ -67,30 +67,38 @@ var start = function () {
                 });        
                 return;
             } 
+            
+            //lo remplace para no tener tantos problemas (mejor solucion):
 
-            chrome.runtime.sendMessage({
+            window.parent.postMessage({
+                action: 'validHuman',
+                pageContent: 'page_freecoint'
+            }, 'https://freebitco.in');
+
+            console.log('ttttt');
+
+            return;
+            /*chrome.runtime.sendMessage({
                 event: 'validHumanCaptcha',
                 content: {
                     action: 'validHuman',
                     pageContent: 'page_freecoint'
                 } 
-            });
+            });*/
 
-            console.log('ttttt');
+            
 
-            funcUtils.waitValit().then(res => {
+            /*funcUtils.waitValit().then(res => {
                 if(!res) resolveCathInit(time); // is not frame human resolve
                 //reload page
-                chrome.runtime.sendMessage({ event: 'reloadPage'});
-            }).catch(() => chrome.runtime.sendMessage({ event: 'reloadPage'}));
-
-            return;
+                window.location.reload();
+            }).catch(() => window.location.reload());*/
         }
 
         console.log('wait resolve');
         setTimeout(() => timeStart.call(this, cTime + 1), 500);
     }
-
+    
     let resolveCathInit = time => {
         if(eleCap != null) {
             console.log('asdsaasd');

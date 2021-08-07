@@ -295,7 +295,6 @@ const bootPageScript = function (opts = {}) {
         chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             self.dispatch(request.event, request.content, sender, sendResponse);
         });
-
         
         chrome.alarms.onAlarm.addListener(alarm => {
             let currentTimeDelay = alarm.scheduledTime;
@@ -319,10 +318,10 @@ const bootPageScript = function (opts = {}) {
                             },
                             files: ['content/page_captcha.js'],
                         }),
-                        chrome.scripting.executeScript({ // execute dom
+                        /*chrome.scripting.executeScript({ // execute dom
                             target: { tabId: tab.id },
                             files: ['content/page_freecoint.js'],
-                        })
+                        })*/
                     ]).then(v => {
                         self.setStorage({ registerScripts: true });
                     }).catch(self.runError((e, error) => {
@@ -397,56 +396,7 @@ const bootPageScript = function (opts = {}) {
             console.log('M => addContentScrips -> data: ', tab);
             chrome.scripting.executeScript({ // execute dom
                 target: { tabId: tab.id },
-                function: function () {
-                    var utilsPromise = {
-                        frame: () => new Promise((resolve, reject) => {
-                            var countMax = 10;
-                            var timeStart = count => {
-                                var iframeUrl = document.querySelector('iframe');
-                                if(iframeUrl != null) return resolve(iframeUrl.attributes.src.value);
-    
-                                if(count >= countMax) return reject({
-                                    message: 'no capture iframe element',
-                                    reload: true 
-                                });
-                                 
-                                setTimeout(() => timeStart.call(null, count + 1), 1000);
-                            }
-                            
-                            timeStart(0);
-                        }),
-                        timeWait: (time = 0) => new Promise((resolve, reject) => {
-                            var countMax = 10;
-                            var timeStart = count => {
-                                var node = document.querySelector('#free_play_tab > #wait');
-                                if(node.style.display == 'none') return resolve({ element: node });
-
-                                if(count >= countMax) return reject({
-                                    message: 'no time wait element',
-                                    reload: false
-                                });
-
-                                setTimeout(() => timeStart.call(null, count + 1), 1000);
-                            }
-
-                            timeStart(time);
-                        })
-                    }
-                    
-                    utilsPromise.timeWait().then(time => {
-                        console.log('qqqqqqqqqqqq', time.element);
-                        return utilsPromise.frame();
-                    }).then(iframeUrl => {
-                        /*chrome.runtime.sendMessage({ 
-                            event: "inyectScrips",
-                            content: { iframeUrl }
-                        });*/
-                    }).catch(({message, reload}) => {
-                        console.error(message);
-                        if(reload) window.location.reload(); 
-                    });
-                    
-                }
+                files: ['content/page_freecoint.js']
             }).catch(e => {
                 chrome.tabs.reload(tab.id);
                 console.error('no inyect qqqq', e);
