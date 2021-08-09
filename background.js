@@ -392,16 +392,17 @@ const bootPageScript = function (opts = {}) {
         si no esta en tiempo inyecto los scripts
         */
 
-        self.getTabFreecoint(tab => {
+        self.getTabFreecoint(async tab => {
             console.log('M => addContentScrips -> data: ', tab);
-            chrome.scripting.executeScript({ // execute dom
-                target: { tabId: tab.id },
-                files: ['content/page_freecoint.js']
-            }).catch(e => {
+            try {
+                await chrome.scripting.executeScript({ // execute dom
+                    target: { tabId: tab.id },
+                    files: ['content/page_freecoint.js']
+                });
+            } catch (e) {
                 chrome.tabs.reload(tab.id);
                 console.error('no inyect qqqq', e);
-            });
-
+            }
         });
 
         
@@ -411,25 +412,23 @@ const bootPageScript = function (opts = {}) {
         
         self.onEvent('inyectScrips', (content, sender, sendResponse) => {
             console.log('prepare -> inyectScrips');
-            self.getTabFreecoint(tab => {
-                self.getloadFrames(tab).then(details => {
+            self.getTabFreecoint(async tab => {
+                try {
+                    let details = await self.getloadFrames(tab);
                     console.log('add -> ContentScrips', tab, details);
                     var iframeUrl = typeof content.iframeUrl != 'undefined' ? content.iframeUrl : '';  
                     //add contentd scripts
 
                     self.setStorage({ 
                         timeData : { tab, details, iframeUrl }
-                    }, () => {
-                        chrome.alarms.create('time', {
-                            when: Date.now() + 1000
-                        });
-                    }, 'local');   
+                    }, () => chrome.alarms.create('time', {
+                        when: Date.now() + 1000
+                    }), 'local')
 
-                }).catch(e => {
+                } catch (e) {
                     chrome.tabs.reload(tab.id);
                     console.error('M => addEventLoop E -> ', e);
-                });
-
+                }
             });
 
         });
