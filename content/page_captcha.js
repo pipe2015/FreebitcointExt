@@ -106,7 +106,7 @@ var init = async () => {
     }
     
     try {
-        let element = await funcUtils.waitElement(5000 + (Math.floor(Math.random() * 5) * 1000)); 
+        let element = await funcUtils.waitElement(5000); 
         console.log('waitele', element);
         eleCap = element;
         resolveCathInit(sttime);
