@@ -1,3 +1,4 @@
+const PAGE_FCIT = 'page_freecoint';
 console.log('page freecoint', window.location.origin);
 
 var utilsPromise = {
@@ -170,7 +171,7 @@ var init_events = () => {
 
     chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     
-        if(request.action == "clickRoll" && request.page == "page_freecoint") {
+        if(request.action == "clickRoll" && request.page == PAGE_FCIT) {
             utilsFunc.clickRoll(isClick => sendResponse(isClick));
         }
         
@@ -180,7 +181,7 @@ var init_events = () => {
         if(event.origin.indexOf('newassets') == -1) return;
         try {
 
-            if(event.data.action == 'validHuman' && event.data.pageContent == 'page_freecoint') {
+            if(event.data.action == 'validHuman' && event.data.pageContent == PAGE_FCIT) {
                 var valid = await utilsPromise.validHumanCaptcha();
     
                 if(valid) {
@@ -196,7 +197,7 @@ var init_events = () => {
                 return;
             }   
 
-            if(event.data.action == 'withoutCaptcha' && event.data.pageContent == 'page_freecoint') return utilsFunc.clickWithoutCaptcha();
+            if(event.data.action == 'withoutCaptcha' && event.data.pageContent == PAGE_FCIT) return utilsFunc.clickWithoutCaptcha();
             
         } catch (error) {
             console.error(error);
