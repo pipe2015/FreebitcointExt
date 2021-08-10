@@ -51,7 +51,7 @@ var funcUtils = {
     }, time))
 }
 
-var init = function () {
+var init = async () => {
     var sttime = 0;
     var eleCap = null;
     var loadpulse = 6;
@@ -105,14 +105,15 @@ var init = function () {
         }
     }
     
-    funcUtils.waitElement(5000 + (Math.floor(Math.random() * 5) * 1000)).then(element => {
+    try {
+        let element = await funcUtils.waitElement(5000 + (Math.floor(Math.random() * 5) * 1000)); 
+        console.log('waitele', element);
         eleCap = element;
-        console.log('waitele', eleCap);
         resolveCathInit(sttime);
-    }).catch(error => {
+    } catch (error) {
         chrome.runtime.sendMessage({ event: 'reloadPage'});
         console.warn('captchat incapture button click', error);
-    });
+    }
 };
 
 //start
