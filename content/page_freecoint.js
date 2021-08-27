@@ -72,6 +72,7 @@ var utilsFunc = {
         if(button.style.display != 'none') {
             console.log('Resolve Click Roll');
             button.click();
+            utilsFunc.errorMessage();
             if(typeof callback != 'undefined') callback(true); 
             return;
         }
@@ -114,6 +115,9 @@ var utilsFunc = {
         utilsFunc.showWithoutCapctcha(isShow => {
             if(isShow) utilsFunc.clickRoll();
         });
+    },
+    errorMessage: () => {
+        console.log(document.getElementById('free_play_error'));
     }
 }
 
